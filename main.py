@@ -40,10 +40,8 @@ if __name__ == "__main__":
     log_level = config_manager.get_setting('logging.level', 'INFO') # Example top-level key
     print(f"Logging level from config: {log_level}")
     # Example accessing nested strategy params using dot notation
-    ma_window = config_manager.get_setting('strategy_params.MeanReversionStrategy.window', 30)
+    ma_window = config_manager.get_setting('strategy_params.MeanReversionStrategy.lookback_window')
     print(f"MA Strategy Window from config: {ma_window}")
-    # Example accessing a setting that might not exist, using default
-    broker_url = config_manager.get_setting('broker.url', 'http://default-broker.com')
-    print(f"Broker URL: {broker_url}")
-    print("---------------------------------")
+
+
 
