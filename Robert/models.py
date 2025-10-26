@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
-from datetime import datetime
-from datetime import date
+from datetime import datetime, date
+#from datetime import date
 import pandas as pd 
 from typing import List, Dict
+from abc import ABC, abstractmethod
+
 
 @dataclass(frozen=True)
 class MarketDataPoint:
@@ -43,29 +45,58 @@ class ETF(Instrument):
         super().__init__(symbol, price, issuer, **kwargs)
         self.sector = sector 
 
-@dataclass
-class Position:
-    symbol: str
-    quantity: float
-    price: float
 
-    def value(self) -> float:
+class PortfolioComponent(ABC):
+    """Makes sure that the Portfolio and Position classes have the get_value and get_positions methods."""
+
+    @abstractmethod
+    def get_value(self):
+        pass
+
+    @abstractmethod
+    def get_positions(self):
+        pass
+
+@dataclass
+class Position(PortfolioComponent):
+    symbol = None
+    quantity = 0
+    price = 0
+
+    def __init__(self, symbol, quantity, price):
+        self.symbol = symbol
+        self.quantity = quantity
+        self.price = price
+
+    def value(self):
+        """Helper method — not part of the interface, just a convenience."""
         return self.quantity * self.price
 
+    def get_value(self):
+        return self.value()
+
+    def get_positions(self):
+        return [self]
+
 @dataclass
-class Portfolio:
+class Portfolio(PortfolioComponent):
     name: str
-    owner: str | None = None
-    positions: List[Position] = field(default_factory=list)
-    sub_portfolios: Dict[str, "Portfolio"] = field(default_factory=dict)
+    owner: str = None
+    positions: list = field(default_factory=list)
+    sub_portfolios: dict = field(default_factory=dict)
 
-    def get_value(self) -> float:
-        v = sum(p.value() for p in self.positions)
-        v += sum(sp.get_value() for sp in self.sub_portfolios.values())
-        return v
+    def add_position(self, position):
+        self.positions.append(position)
 
-    def get_positions(self) -> List[Position]:
-        # flatten if you want the composite style API
+    def add_subportfolio(self, sub):
+        self.sub_portfolios[sub.name] = sub
+
+    def get_value(self):
+        total = sum(p.get_value() for p in self.positions)
+        total += sum(sp.get_value() for sp in self.sub_portfolios.values())
+        return total
+
+    def get_positions(self):
         out = list(self.positions)
         for sp in self.sub_portfolios.values():
             out.extend(sp.get_positions())

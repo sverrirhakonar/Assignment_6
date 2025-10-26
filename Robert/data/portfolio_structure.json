@@ -8,7 +8,7 @@
   "sub_portfolios": [
     {
       "name": "Index Holdings",
-      "positions": [{"symbol": "SPY", "quantity": 20, "price": 430.50}]
+      "positions": [{"symbol": "SPY", "quantity": 20, "price": 430.50}, {"symbol": "QQQ", "quantity": 10, "price": 617.10}, {"symbol": "IWM", "quantity": 5, "price": 249.430}]
     }
   ]
 }
