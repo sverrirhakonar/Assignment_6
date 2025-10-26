@@ -1,15 +1,16 @@
 import csv  
 import os   
-from models import Stock, Bond, ETF 
+from models import Stock, Bond, ETF, MarketDataPoint
 import pandas as pd
 from patterns.singleton import Config 
 from patterns.factory import InstrumentFactory
-from data_loader import YahooFinanceAdapter # <-- Import the Adapter
+from data_loader import YahooFinanceAdapter, BloombergXMLAdapter
 
 INSTRUMENT_FILE = os.path.join('data', 'instruments.csv')
 CONFIG_FILE = os.path.join('data', 'config.json')
 PARAMS_FILE = os.path.join('data', 'strategy_params.json')
 YAHOO_DATA_FILE = os.path.join('data', 'external_data_yahoo.json') 
+BLOOMBERG_DATA_FILE = os.path.join('data', 'external_data_bloomberg.xml')
 
 def get_instruments(csv_path):
     instruments = []
@@ -57,4 +58,12 @@ if __name__ == "__main__":
         print("Could not retrieve AAPL data from Yahoo adapter.")
     print("---------------------------")
 
-
+# --- Test BloombergXMLAdapter ---  # <-- New Test Block
+    print("\n--- Testing Bloomberg Adapter ---")
+    bloomberg_adapter = BloombergXMLAdapter(BLOOMBERG_DATA_FILE)
+    msft_data_bloomberg = bloomberg_adapter.get_data('MSFT') # Try getting data for MSFT
+    if msft_data_bloomberg:
+        print(f"Bloomberg MSFT Data: {msft_data_bloomberg}") # Relies on MarketDataPoint.__repr__
+    else:
+        print("Could not retrieve MSFT data from Bloomberg adapter.")
+    print("-------------------------------")
