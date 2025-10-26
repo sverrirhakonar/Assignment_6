@@ -1,6 +1,6 @@
 {
   "name": "Main Portfolio",
-  "owner": "sdonadio",
+  "owner": "robertovilhjalmur",
   "positions": [
     {"symbol": "AAPL", "quantity": 100, "price": 172.35},
     {"symbol": "MSFT", "quantity": 50, "price": 328.10}
