@@ -7,12 +7,14 @@ class Config:
     Loads settings from JSON files and ensures only one instance exists.
     """
     _instance = None # Class variable to store the single instance
+    _initialized = False
 
     def __new__(cls, *args, **kwargs):
         # Called BEFORE __init__. Controls object CREATION.
         if cls._instance is None:
             # Create the actual instance using the object base class __new__
             cls._instance = super().__new__(cls)
+
         return cls._instance # Always return the single instance
 
     def __init__(self, config_filepath=None, params_filepath=None):
@@ -20,6 +22,9 @@ class Config:
         Initialize the Singleton instance's attributes ONCE. Loads settings.
         Accepts filepaths only if not already initialized.
         """
+        if Config._initialized: 
+             print("Config already initialized. Skipping __init__.") # Optional print
+             return # Stop initialization if already done
         print("Initializing Config settings...") # For demonstration
         if config_filepath is None or params_filepath is None:
             # We must get the paths the first time.
@@ -27,6 +32,7 @@ class Config:
 
         self.settings = {}
         self._load_settings(config_filepath, params_filepath)
+        Config._initialized = True
 
 
     def _load_settings(self, config_filepath, params_filepath):
