@@ -16,6 +16,12 @@ class Instrument:
         self.price = price
         self.issuer = issuer
 
+    def get_metrics(self) -> dict:
+        return {
+            'symbol': self.symbol,
+            'price': self.price
+        }
+
 class Stock(Instrument):
     """Represents a stock instrument."""
     def __init__(self, symbol, price, issuer, sector):

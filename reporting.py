@@ -2,6 +2,8 @@
 from patterns.observer import Observer
 import logging # We can use the logging module for the logger
 import datetime # To add timestamps to logs
+from patterns.command import CommandInvoker, BuyOrderCommand, SellOrderCommand
+from portfolio import Portfolio
 
 # --- Optional: Set up a simple logger (writes to a file) ---
 # This setup is basic; a real app might configure this in main.py
@@ -60,3 +62,50 @@ class AlertObserver(Observer):
         print(f"  Symbol:    {signal.get('symbol')}")
         print(f"  Price:     {signal.get('price')}")
         print("*"*30 + "\n")
+
+class OrderObserver(Observer):
+    """
+    An observer that receives a signal and converts it into a Command
+    to be executed by the CommandInvoker.
+    """
+    def __init__(self, portfolio: Portfolio, invoker: CommandInvoker, fixed_quantity: int = 100):
+        self.portfolio = portfolio
+        self.invoker = invoker
+        self.fixed_quantity = fixed_quantity # Simple way to set order size
+        print("OrderObserver initialized.")
+
+    def update(self, signal: dict):
+        """
+        Receives signal update, creates a command, and executes it.
+        """
+        print(f"OrderObserver: Received signal: {signal.get('signal')} {signal.get('symbol')}")
+        
+        signal_action = signal.get('signal')
+        symbol = signal.get('symbol')
+        price = signal.get('price')
+
+        if not all([signal_action, symbol, price]):
+            print("OrderObserver: Incomplete signal received. Skipping command.")
+            return
+
+        # 1. Create the Command object
+        if signal_action == 'BUY':
+            command = BuyOrderCommand(
+                portfolio=self.portfolio,
+                symbol=symbol,
+                price=price,
+                quantity=self.fixed_quantity
+            )
+        elif signal_action == 'SELL':
+            command = SellOrderCommand(
+                portfolio=self.portfolio,
+                symbol=symbol,
+                price=price,
+                quantity=self.fixed_quantity
+            )
+        else:
+            # Not a BUY or SELL signal, so do nothing
+            return 
+            
+        # 2. Tell the Invoker to execute the command
+        self.invoker.execute_command(command)

@@ -9,6 +9,9 @@ from engine import TradingEngine
 from patterns.strategy import MeanReversionStrategy, BreakoutStrategy
 from reporting import LoggerObserver, AlertObserver 
 from datetime import datetime
+from reporting import LoggerObserver, AlertObserver, OrderObserver 
+from portfolio import Portfolio 
+from patterns.command import CommandInvoker
 
 INSTRUMENT_FILE = os.path.join('data', 'instruments.csv')
 CONFIG_FILE = os.path.join('data', 'config.json')
@@ -27,7 +30,6 @@ def get_instruments(csv_path):
     return instruments
 
 
-# --- Main execution block ---
 if __name__ == "__main__":
 
     # --- Test Instrument Loading (Task 1) ---
@@ -45,6 +47,7 @@ if __name__ == "__main__":
     config2 = Config()
     print(f"Config is Singleton: {config1 is config2}")
     print(f"Log Level from Config: {config1.get_setting('log_level', 'DEFAULT')}")
+    # (Update your strategy params json to 5 and 4 for this test to work!)
     print(f"MA Window from Config: {config1.get_setting('strategy_params.MeanReversionStrategy.lookback_window', 'DEFAULT')}")
     print("----------------------------")
 
@@ -59,70 +62,77 @@ if __name__ == "__main__":
     if msft_data_bloomberg: print(f"Bloomberg MSFT Data: {msft_data_bloomberg}")
     print("----------------------")
 
-    # --- Test Strategy Engine with Observers (Task 5 & 6) ---
-    print("\n--- Testing Strategy Engine (Mean Reversion) ---")
+    # --- Setup for Task 6 & 7: Portfolio, Invoker, Observers ---
+    print("\n--- Initializing Portfolio, Invoker, and Observers ---")
     
-    # 1. Create strategy
-    mean_rev_strategy = MeanReversionStrategy()
+    # 1. Create the Receiver
+    portfolio = Portfolio(initial_cash=500_000.0)
     
-    # 2. Create engine
-    engine = TradingEngine(mean_rev_strategy)
-
-    # 3. Create observers
+    # 2. Create the Invoker
+    invoker = CommandInvoker()
+    
+    # 3. Create Observers
     logger = LoggerObserver()
     alerter = AlertObserver()
+    # Create the new OrderObserver, giving it the portfolio and invoker
+    order_executor = OrderObserver(portfolio=portfolio, invoker=invoker, fixed_quantity=100)
+    
+    print("-----------------------------------------------------")
 
-    # 4. ATTACH observers to the engine
+    # --- Test Strategy Engine (Mean Reversion) (Task 5, 6, 7) ---
+    print("\n--- Testing Strategy Engine (Mean Reversion) ---")
+    mean_rev_strategy = MeanReversionStrategy()
+    engine = TradingEngine(mean_rev_strategy)
+
+    # ATTACH ALL observers
     print("Attaching observers...")
     engine.attach(logger)
     engine.attach(alerter)
+    engine.attach(order_executor) # <-- Attach the new OrderObserver
 
-    # 5. Create mock data (using a list with known triggers)
+    # Create mock data (make sure window in json is small, e.g., 5)
     mock_feed_mr = [
         MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 30, 0), symbol='AAPL', price=100.0),
         MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 31, 0), symbol='AAPL', price=101.0),
         MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 32, 0), symbol='AAPL', price=102.0),
         MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 33, 0), symbol='AAPL', price=101.0),
-        MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 34, 0), symbol='AAPL', price=100.0),
+        MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 34, 0), symbol='AAPL', price=100.0), # Window full (5)
         MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 35, 0), symbol='AAPL', price=80.0),  # Should trigger BUY
         MarketDataPoint(timestamp=datetime(2025, 1, 1, 9, 36, 0), symbol='AAPL', price=120.0)  # Should trigger SELL
     ]
 
-    # 6. Run the engine
-    # Now, when run() finds a signal, it will call publisher.notify(),
-    # which will call update() on both 'logger' and 'alerter'.
     engine.run(mock_feed_mr)
     
     print("\n--- Testing Strategy Engine (Breakout) ---")
-    # 1. Create strategy
     breakout_strategy = BreakoutStrategy()
-    
-    # 2. Create engine
     engine2 = TradingEngine(breakout_strategy)
     
-    # 3. ATTACH observers (we can reuse the same logger/alerter objects)
+    # ATTACH observers
     print("Attaching observers...")
     engine2.attach(logger)
     engine2.attach(alerter)
-    
-    # You can also detach an observer if needed
-    # engine2.detach(alerter) 
+    engine2.attach(order_executor) # <-- Attach the new OrderObserver
 
-    # 4. Create mock data
+    # Create mock data (make sure window in json is small, e.g., 4)
     mock_feed_bo = [
         MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 30, 0), symbol='MSFT', price=200.0),
         MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 31, 0), symbol='MSFT', price=201.0),
         MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 32, 0), symbol='MSFT', price=200.0),
-        MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 33, 0), symbol='MSFT', price=201.0),
+        MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 33, 0), symbol='MSFT', price=201.0), # Window full (4)
         MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 34, 0), symbol='MSFT', price=205.0), # Should trigger BUY
         MarketDataPoint(timestamp=datetime(2025, 1, 2, 9, 35, 0), symbol='MSFT', price=195.0)  # Should trigger SELL
     ]
     
-    # 5. Run the second engine
     engine2.run(mock_feed_bo)
     print("---------------------------------")
-
-
-
-
-
+    
+    # --- Test Undo Functionality (Task 7) ---
+    print("\n--- Testing Undo/Redo ---")
+    print("Undoing last 2 commands...")
+    invoker.undo_last_command() # Undoes the MSFT SELL
+    invoker.undo_last_command() # Undoes the MSFT BUY
+    
+    print("\nFinal Portfolio State:")
+    print(f"Cash: ${portfolio.cash:,.2f}")
+    print(f"Positions: {portfolio.positions}")
+    print("-------------------------")
