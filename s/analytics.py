@@ -4,7 +4,8 @@ from models import Instrument # Import the base class we're decorating
 import numpy as np # We'll need numpy for calculations
 # We'll need a way to get historical data,
 # but for now, we'll just mock it inside the decorator.
-
+import pandas as pd
+# d
 # --- 1. Abstract Decorator ---
 class InstrumentDecorator(Instrument, ABC):
     _wrapped_instrument: Instrument = None
