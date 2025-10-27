@@ -1,6 +1,6 @@
 {
   "name": "Main Portfolio",
-  "owner": "sdonadio",
+  "owner": "robertovilhjalmur",
   "positions": [
     {"symbol": "AAPL", "quantity": 100, "price": 172.35},
     {"symbol": "MSFT", "quantity": 50, "price": 328.10}
@@ -8,7 +8,7 @@
   "sub_portfolios": [
     {
       "name": "Index Holdings",
-      "positions": [{"symbol": "SPY", "quantity": 20, "price": 430.50}]
+      "positions": [{"symbol": "SPY", "quantity": 20, "price": 430.50}, {"symbol": "QQQ", "quantity": 10, "price": 617.10}, {"symbol": "IWM", "quantity": 5, "price": 249.430}]
     }
   ]
 }
