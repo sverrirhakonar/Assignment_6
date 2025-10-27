@@ -59,9 +59,8 @@ class BloombergXMLAdapter:
     """Adapts Bloomberg XML data format to MarketDataPoint objects."""
     def __init__(self, filepath: str):
         self.filepath = filepath
-        # Store data indexed by symbol after parsing
         self._data_by_symbol: dict[str, ET.Element] = self._load_and_parse_data()
-
+        
     def _load_and_parse_data(self) -> dict[str, ET.Element]:
         """Loads and parses the XML file, indexing instrument elements by symbol."""
         indexed_data = {}
@@ -69,7 +68,17 @@ class BloombergXMLAdapter:
             tree = ET.parse(self.filepath)
             root = tree.getroot()
 
-            for instrument_element in root.findall('instrument'):
+            instrument_elements = [] # A list to hold the <instrument> elements we find
+            if root.tag == 'instrument':
+                instrument_elements = [root] # It's a file with just one instrument
+            else:
+                instrument_elements = root.findall('instrument')
+
+            if not instrument_elements:
+                print(f"Warning: No '<instrument>' tags found in {self.filepath}")
+                return {}
+
+            for instrument_element in instrument_elements:
                 symbol_element = instrument_element.find('symbol') # Find the <symbol> tag
                 if symbol_element is not None and symbol_element.text:
                     symbol = symbol_element.text.strip() # Get text content of <symbol>
@@ -90,12 +99,14 @@ class BloombergXMLAdapter:
             print(f"Error loading {self.filepath}: {e}")
             return {}
 
-    def get_data(self, symbol: str):
+    def get_data(self, symbol: str) -> MarketDataPoint | None:
         """Retrieves data for a symbol and adapts it to MarketDataPoint."""
         instrument_element = self._data_by_symbol.get(symbol) # Efficient lookup
+
         if instrument_element is None:
             print(f"Warning: Symbol '{symbol}' not found in Bloomberg XML data.")
             return None
+
         try:
             price_element = instrument_element.find('price')         # Use 'price' tag
             timestamp_element = instrument_element.find('timestamp') # Use 'timestamp' tag
@@ -109,12 +120,12 @@ class BloombergXMLAdapter:
             timestamp_str = timestamp_element.text
 
             timestamp_dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+
             return MarketDataPoint(timestamp=timestamp_dt, symbol=symbol, price=price)
 
         except (ValueError, TypeError) as e: # Catches float conversion or None.text errors
             print(f"Warning: Error converting/finding data for symbol '{symbol}' in Bloomberg XML: {e}")
             return None
-        
         except Exception as e: # Catch other potential errors like invalid timestamp
             print(f"Warning: Unexpected error processing symbol '{symbol}' in Bloomberg XML: {e}")
             return None
