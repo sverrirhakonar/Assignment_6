@@ -50,10 +50,9 @@ Design Patterns in Financial Software Architecture
 
   Short report about patterns, rationale, and tradeoffs.
 
-
 ### References:
 
-1. ChatGPT 5, used to help with coding, ask questions about design patterns, why to implement a certain way, etc.
-2. Cursor, tab feature that uses a couple AI models.
+1. ChatGPT 5, used for coding and other general help, ask questions about design patterns, why to implement a certain way, etc.
+2. Cursor, tab feature that uses a couple of AI models.
 3. Sverrir Hakonarson and Robert Asgeirsson (Old code from past projects).
 4. Course slides.

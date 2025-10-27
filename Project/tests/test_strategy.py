@@ -30,7 +30,7 @@ def test_breakout_strategy_signals_expected_behavior():
     for t in ticks:
         signals.extend(strat.generate_signals(t))
 
-    # Expect at least one BUY signal
+    # Expect one BUY signal
     assert any(s["action"] == "BUY" for s in signals), "Expected a BUY signal for breakout"
 
 
@@ -50,6 +50,6 @@ def test_mean_reversion_strategy_signals_expected_behavior():
     for t in ticks:
         signals.extend(strat.generate_signals(t))
 
-    # Expect at least one SELL signal due to overvaluation
+    # Expect one SELL signal due to overvaluation
     assert any(s["action"] == "SELL" for s in signals), "Expected a SELL signal for mean reversion"
 

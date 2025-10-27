@@ -15,7 +15,7 @@ print("Testing the factory.")
 print("----------------------------------------------------------")
 import csv
 
-with open("Robert/data/instruments.csv", newline="", encoding="utf-8") as f:
+with open("Project/data/instruments.csv", newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in list(reader):
         instrument = InstrumentFactory.create_instrument(row)
@@ -24,7 +24,7 @@ with open("Robert/data/instruments.csv", newline="", encoding="utf-8") as f:
 print("----------------------------------------------------------")
 print("Testing the builder.")
 print("----------------------------------------------------------")
-portfolio = PortfolioBuilder.from_json("Robert/data/portfolio_structure.json")
+portfolio = PortfolioBuilder.from_json("Project/data/portfolio_structure.json")
 print(portfolio.name, portfolio.owner)
 
 
@@ -44,8 +44,8 @@ print("----------------------------------------------------------")
 print("Testing the data loader (ingestion from external_data_yahoo.json and external_data_bloomberg.xml)")
 print("----------------------------------------------------------")
 # Testing the data loader
-yahoo = YahooFinanceAdapter("Robert/data/external_data_yahoo.json")
-bloomberg = BloombergXMLAdapter("Robert/data/external_data_bloomberg.xml")
+yahoo = YahooFinanceAdapter("Project/data/external_data_yahoo.json")
+bloomberg = BloombergXMLAdapter("Project/data/external_data_bloomberg.xml")
 
 meta = yahoo.get_data("META")
 msft = bloomberg.get_data("MSFT")
@@ -68,7 +68,7 @@ for sub_name, sub in portfolio.sub_portfolios.items():
 print("----------------------------------------------------------")
 print("Testing the strategy interchangeability and signal generation.")
 print("----------------------------------------------------------")
-ticks = read_csv_to_immutable_list("Robert/data/market_data.csv")
+ticks = read_csv_to_immutable_list("Project/data/market_data.csv")
 strategies = [BreakoutStrategy(), MeanReversionStrategy()]
 
 for strat in strategies:
@@ -133,5 +133,8 @@ print("After undo:", broker.summary())
 print("Redoing last trade...")
 invoker.redo()
 print("After redo:", broker.summary())
+
+print("----------------------------------------------------------")
+print("Thank you for runnign the program!")
 
 
