@@ -33,8 +33,6 @@ class InstrumentDecorator(MetricsCapable):
         return dict(base)  # copy
 
 
-# ---------- helpers (pure math; feed in price/return series you control) ----------
-
 def _to_returns(price_series):
     s = pd.Series(price_series).astype(float)
     return s.pct_change().dropna()
@@ -63,8 +61,6 @@ def _max_drawdown(price_series):
     dd = (p / cummax - 1.0)
     return float(dd.min())  # negative number, e.g. -0.23 = -23%
 
-
-# ---------- concrete decorators ----------
 
 class VolatilityDecorator(InstrumentDecorator):
     def __init__(self, instrument, price_series, periods_per_year=252):

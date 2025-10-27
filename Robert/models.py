@@ -101,3 +101,58 @@ class Portfolio(PortfolioComponent):
         for sp in self.sub_portfolios.values():
             out.extend(sp.get_positions())
         return out
+
+
+class Broker:
+    """Handles cash, positions, and trade execution."""
+
+    def __init__(self, starting_cash: float = 0.0):
+        self.cash = float(starting_cash)
+        self.last_price: Dict[str, float] = {}
+        self.root_portfolio = Portfolio(name="MainPortfolio")
+        self.trades = []
+
+    def update_price(self, tick: MarketDataPoint):
+        self.last_price[tick.symbol] = tick.price
+
+    def execute_order(self, symbol: str, side: str, qty: float, price: float):
+        """Executes a simple market order and updates the portfolio."""
+        if side == "BUY":
+            self.cash -= price * qty
+            self._adjust_position(symbol, qty, price)
+        elif side == "SELL":
+            self.cash += price * qty
+            self._adjust_position(symbol, -qty, price)
+
+        self.trades.append({"symbol": symbol, "side": side, "qty": qty, "price": price})
+
+    def _adjust_position(self, symbol: str, delta_qty: float, price: float):
+        """Update or create a position in the root portfolio."""
+        pos = next((p for p in self.root_portfolio.positions if p.symbol == symbol), None)
+        if pos:
+            pos.quantity += delta_qty
+            pos.price = price
+            if abs(pos.quantity) < 1e-9:  # flat
+                self.root_portfolio.positions.remove(pos)
+        else:
+            if delta_qty > 0:
+                self.root_portfolio.add_position(Position(symbol, delta_qty, price))
+
+    def equity(self):
+        # Total = cash + portfolio value using last prices
+        port_value = 0
+        for pos in self.root_portfolio.positions:
+            price = self.last_price.get(pos.symbol, pos.price)
+            port_value += pos.quantity * price
+        return self.cash + port_value
+
+    def summary(self):
+        return {
+            "cash": round(self.cash, 2),
+            "equity": round(self.equity(), 2),
+            "positions": [
+                {"symbol": p.symbol, "qty": p.quantity, "price": p.price}
+                for p in self.root_portfolio.positions
+            ],
+            "n_trades": len(self.trades),
+        }
